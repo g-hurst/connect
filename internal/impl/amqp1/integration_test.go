@@ -150,7 +150,15 @@ func TestIntegrationAMQP1MessageProperties(t *testing.T) {
 		assertMeta("amqp_user_id", "testuser")
 		assertMeta("amqp_content_type", "application/json")
 		assertMeta("amqp_content_encoding", "utf-8")
-		assertMeta("amqp_creation_time", creationTime.Format(time.RFC3339))
+
+		// AMQP timestamps are zoneless epoch-millis on the wire, so the broker
+		// may round-trip the value in a different UTC offset. Compare the
+		// underlying instant rather than the formatted string.
+		creationTimeMeta, ok := msg.MetaGet("amqp_creation_time")
+		require.True(t, ok, "missing metadata key %q", "amqp_creation_time")
+		parsedCreationTime, err := time.Parse(time.RFC3339, creationTimeMeta)
+		require.NoError(t, err)
+		require.True(t, creationTime.Equal(parsedCreationTime), "expected %v, got %v", creationTime, parsedCreationTime)
 
 		require.NoError(t, ack(ctx, nil))
 	})
