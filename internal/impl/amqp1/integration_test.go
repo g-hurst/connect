@@ -89,6 +89,7 @@ func TestIntegrationAMQP1MessageProperties(t *testing.T) {
 		contentType := "application/json"
 		contentEncoding := "utf-8"
 		testUUID := amqp.UUID{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10}
+		creationTime := time.Date(2024, 3, 15, 9, 30, 0, 0, time.UTC)
 
 		err = sender.Send(ctx, &amqp.Message{
 			Data: [][]byte{[]byte("hello")},
@@ -103,6 +104,7 @@ func TestIntegrationAMQP1MessageProperties(t *testing.T) {
 				UserID:          []byte("testuser"),
 				ContentType:     &contentType,
 				ContentEncoding: &contentEncoding,
+				CreationTime:    &creationTime,
 			},
 		}, nil)
 		require.NoError(t, err)
@@ -148,6 +150,7 @@ func TestIntegrationAMQP1MessageProperties(t *testing.T) {
 		assertMeta("amqp_user_id", "testuser")
 		assertMeta("amqp_content_type", "application/json")
 		assertMeta("amqp_content_encoding", "utf-8")
+		assertMeta("amqp_creation_time", creationTime.Format(time.RFC3339))
 
 		require.NoError(t, ack(ctx, nil))
 	})
